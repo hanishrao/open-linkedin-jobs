@@ -1,4 +1,4 @@
-import { Job as IJob } from "../types/index.js";
+import { Job as IJob } from '../types/index.js';
 
 export class Job implements IJob {
   title: string;
@@ -26,11 +26,11 @@ export class Job implements IJob {
 
     this.title = title;
     this.company = company;
-    this.location = location || "";
+    this.location = location || '';
     this.postedDate = postedDate || new Date().toISOString();
-    this.salary = salary || "Not specified";
-    this.url = url || "";
-    this.companyLogoUrl = companyLogoUrl || "";
-    this.postedTimeAgo = postedTimeAgo || "";
+    this.salary = salary || 'Not specified';
+    this.url = url || '';
+    this.companyLogoUrl = companyLogoUrl || '';
+    this.postedTimeAgo = postedTimeAgo || '';
   }
 }

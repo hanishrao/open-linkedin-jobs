@@ -1,0 +1,43 @@
+name: Open LinkedIn Jobs CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 9
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install
+      
+    - name: Lint
+      run: pnpm run lint
+      
+    - name: Build
+      run: pnpm run build
+      
+    - name: Test (Unit)
+      run: pnpm run test:unit
+      # Note: We will switch this to 'npm run test:unit' once Vitest is set up.
+      # For now, 'npm test' runs the integration test which might fail in CI if LinkedIn blocks the IP.
+      # We will fix this in the next step by separating unit and integration tests.

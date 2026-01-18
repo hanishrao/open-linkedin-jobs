@@ -23,6 +23,7 @@ export interface QueryOptions {
   page?: number;
   has_verification?: boolean;
   under_10_applicants?: boolean;
+  proxyUrl?: string;
 }
 
 export interface QueryConfig {
@@ -31,4 +32,5 @@ export interface QueryConfig {
   cacheKey: string;
   startPage?: number;
   batchSize?: number;
+  proxyUrl?: string;
 }

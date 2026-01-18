@@ -1,3 +1,3 @@
 export interface IHttpClient {
-  get(url: string): Promise<string>;
+  get(url: string, options?: { proxyUrl?: string }): Promise<string>;
 }

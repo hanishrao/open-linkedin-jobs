@@ -1,4 +1,4 @@
-import { ICache } from "../interfaces/ICache.js";
+import { ICache } from '../interfaces/ICache.js';
 
 interface CacheItem<T> {
   data: T;

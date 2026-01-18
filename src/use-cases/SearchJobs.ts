@@ -1,32 +1,22 @@
-import { IHttpClient } from "../interfaces/IHttpClient.js";
-import { IHtmlParser } from "../interfaces/IHtmlParser.js";
-import { ICache } from "../interfaces/ICache.js";
-import { Job } from "../types/index.js";
-import { QueryConfig } from "../types/index.js";
+import { IHttpClient } from '../interfaces/IHttpClient.js';
+import { IHtmlParser } from '../interfaces/IHtmlParser.js';
+import { ICache } from '../interfaces/ICache.js';
+import { Job } from '../types/index.js';
+import { QueryConfig } from '../types/index.js';
 
 export class SearchJobs {
   private httpClient: IHttpClient;
   private htmlParser: IHtmlParser;
   private cache: ICache<Job[]>;
 
-  constructor(
-    httpClient: IHttpClient,
-    htmlParser: IHtmlParser,
-    cache: ICache<Job[]>
-  ) {
+  constructor(httpClient: IHttpClient, htmlParser: IHtmlParser, cache: ICache<Job[]>) {
     this.httpClient = httpClient;
     this.htmlParser = htmlParser;
     this.cache = cache;
   }
 
   async execute(queryConfig: QueryConfig): Promise<Job[]> {
-    const {
-      urlBuilder,
-      limit,
-      cacheKey,
-      startPage = 0,
-      batchSize = 25,
-    } = queryConfig;
+    const { urlBuilder, limit, cacheKey, startPage = 0, batchSize = 25, proxyUrl } = queryConfig;
 
     // 1. Check Cache
     if (this.cache) {
@@ -45,7 +35,7 @@ export class SearchJobs {
     while (hasMore) {
       try {
         const url = urlBuilder(start);
-        const data = await this.httpClient.get(url);
+        const data = await this.httpClient.get(url, { proxyUrl });
         const jobs = this.htmlParser.parseJobs(data);
 
         if (!jobs || jobs.length === 0) {
@@ -68,31 +58,29 @@ export class SearchJobs {
         await new Promise((resolve) => setTimeout(resolve, delay));
       } catch (error: unknown) {
         consecutiveErrors++;
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
-        console.error(
-          `Error fetching batch (attempt ${consecutiveErrors}):`,
-          errorMessage
-        );
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        console.error(`Error fetching batch (attempt ${consecutiveErrors}):`, errorMessage);
 
         // Stop strictly on fatal logic errors or max retries
         // We assume "Rate limit reached" is the specific error message we want to backoff on
-        const isRateLimit = errorMessage.includes("Rate limit reached") || errorMessage.includes("429");
-        
+        const isRateLimit =
+          errorMessage.includes('Rate limit reached') || errorMessage.includes('429');
+
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-             console.error("Max consecutive errors reached. Stopping search.");
-             break;
+          console.error('Max consecutive errors reached. Stopping search.');
+          break;
         }
 
         // Only backoff significantly if it looks like a rate limit/network issue
         if (isRateLimit) {
-            const backoff = Math.pow(2, consecutiveErrors) * 1000;
-            console.log(`Rate limit detected. Backing off for ${backoff}ms...`);
-            await new Promise((resolve) => setTimeout(resolve, backoff));
+          const backoff = Math.pow(2, consecutiveErrors) * 1000;
+          console.log(`Rate limit detected. Backing off for ${backoff}ms...`);
+          await new Promise((resolve) => setTimeout(resolve, backoff));
         } else {
-             // For other errors, small delay or break? 
-             // We'll treat them as transient for now but break if they persist
-             await new Promise((resolve) => setTimeout(resolve, 1000));
+          // For other errors, small delay or break?
+          // We'll treat them as transient for now but break if they persist
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
     }
